@@ -1,0 +1,6 @@
+id,variavel,unidade,tsd_media,tsd_ic_margem,tsd_dp,seringa_media,seringa_ic_margem,seringa_dp,p_texto,p_limite
+oferecido,Volume oferecido,%,78.9,7.8,21.9,88.8,4.8,13.3,"0,029",0.029
+cinco_min,Volume oferecido em 5 min,%,37.6,4,11.2,39.3,3.2,8.8,"0,400",0.4
+derramado,Volume derramado,%,2.3,1.7,4.8,17.2,2.6,7.3,"<0,001",0.001
+fluxo,Relação volume/tempo,mL/min,3.2,0.35,0.99,3.31,0.27,0.76,"0,515",0.515
+tempo,Tempo,min,10.49,1.13,3.17,11.38,0.97,2.71,"0,135",0.135

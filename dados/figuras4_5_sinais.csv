@@ -1,0 +1,13 @@
+variavel,unidade,metodo,momento,media,ic_margem,dp
+Saturação de oxigênio,%,TSD,Antes,95.87,0.86,2.4
+Saturação de oxigênio,%,TSD,Durante,94.37,1.61,4.51
+Saturação de oxigênio,%,TSD,Depois,95.67,0.74,2.06
+Saturação de oxigênio,%,Seringa,Antes,93.23,2.04,5.71
+Saturação de oxigênio,%,Seringa,Durante,93.6,1.69,4.72
+Saturação de oxigênio,%,Seringa,Depois,95.9,0.76,2.12
+Frequência cardíaca,bpm,TSD,Antes,134.2,3.65,10.21
+Frequência cardíaca,bpm,TSD,Durante,149.17,4.61,12.9
+Frequência cardíaca,bpm,TSD,Depois,145.5,2.59,7.25
+Frequência cardíaca,bpm,Seringa,Antes,133.6,3.78,10.57
+Frequência cardíaca,bpm,Seringa,Durante,148.07,2.66,7.43
+Frequência cardíaca,bpm,Seringa,Depois,144.73,3.5,9.77

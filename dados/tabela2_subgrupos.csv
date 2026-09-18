@@ -1,0 +1,11 @@
+id,metodo,aig_media,aig_ic_margem,aig_dp,pig_media,pig_ic_margem,pig_dp,p
+oferecido,TSD,69.6,10.2,22,92.8,7.3,13,0.003
+cinco_min,TSD,35,4.9,10.5,41.5,6.5,11.4,0.122
+derramado,TSD,2.3,1.9,4.1,2.4,3.3,5.8,0.965
+fluxo,TSD,3.04,0.45,0.97,3.42,0.57,1.01,0.316
+tempo,TSD,9.9,1.45,3.14,11.38,1.77,3.13,0.218
+oferecido,Seringa,87,6.7,14.4,91.5,6.5,11.5,0.383
+cinco_min,Seringa,38.6,4,8.6,40.3,5.4,9.5,0.608
+derramado,Seringa,16.6,3.5,7.6,17.9,4,7.1,0.634
+fluxo,Seringa,3.34,0.31,0.68,3.27,0.51,0.9,0.827
+tempo,Seringa,11.27,1.34,2.91,11.56,1.41,2.49,0.781

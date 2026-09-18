@@ -1,0 +1,203 @@
+---
+title: "Caderno de apoio · Atividade 4"
+subtitle: "Dados publicados, funções em R e limites da reprodução"
+format:
+  html:
+    theme: default
+    toc: true
+    toc-depth: 2
+    code-fold: true
+    code-summary: "Mostrar código R"
+    embed-resources: true
+    html-math-method: mathml
+execute:
+  echo: true
+---
+
+[Voltar aos slides](index.html) · [Dashboard](painel.html)
+
+## Fonte e alcance
+
+Araújo et al. (2016). *CoDAS*, 28(3), 212–220. [DOI](https://doi.org/10.1590/2317-1782/20162015152).
+
+O artigo disponibiliza 30 linhas de **caracterização dos participantes** na Tabela 1. Não publica os volumes, os tempos ou os sinais vitais individuais por método e momento. Assim, podemos recalcular resumos das características, mas **não reproduzir os testes t pareados ou as ANOVAs temporais**. Nenhuma observação foi simulada.
+
+As idades em semanas e dias foram transcritas separadamente e convertidas por `semanas + dias/7`. Os valores “±” das tabelas são descritos pelos autores como intervalos de confiança, e os valores entre parênteses são desvios padrão. Os arquivos mantêm campos separados para média, margem de IC e DP. Os resumos abaixo usam as 30 linhas publicadas, portanto podem diferir dos arredondamentos ou inconsistências dos resumos do artigo.
+
+```{r}
+#| label: pacotes-e-dados
+source("R/funcoes.R")
+```
+
+## Tabela descritiva com gtsummary
+
+Esta tabela descreve as características disponíveis. Não testa a eficácia dos métodos. Não usamos `add_p()` de forma automática sobre médias agregadas nem aplicamos testes independentes aos dados pareados ausentes.
+
+```{r}
+#| label: resumo-amostra
+individuos |>
+  select(grupo, peso_nascimento, peso_avaliacao, ig, igc, dias_sonda, dias_oral) |>
+  tbl_summary(
+    type = all_continuous() ~ "continuous2",
+    statistic = all_continuous() ~ c("{mean} ({sd})", "{median} [{p25}; {p75}]"),
+    digits = all_continuous() ~ 2,
+    label = list(grupo ~ "Classificação peso/idade gestacional",
+      peso_nascimento ~ "Peso ao nascer (g)", peso_avaliacao ~ "Peso na avaliação (g)",
+      ig ~ "Idade gestacional ao nascer (semanas)",
+      igc ~ "Idade corrigida na avaliação (semanas)",
+      dias_sonda ~ "Dias de sonda gástrica", dias_oral ~ "Dias de alimentação oral"),
+    missing = "ifany"
+  ) |>
+  modify_header(label ~ "**Característica**") |>
+  bold_labels() |>
+  as_gt() |>
+  tab_options(table.font.size = px(16))
+```
+
+## Diagnósticos de normalidade: exercício com dados disponíveis
+
+Usamos **peso ao nascer**, disponível na Tabela 1, para demonstrar as funções vistas em aula. Estes diagnósticos **não verificam a normalidade das diferenças de derramamento**, que não estão disponíveis. Um resultado não significativo de Shapiro–Wilk não prova normalidade.
+
+```{r}
+#| label: densidade-peso
+#| fig-width: 8
+#| fig-height: 4
+ggplot(individuos, aes(x = peso_nascimento)) +
+  geom_density(fill = "#007f7a", alpha = 0.3) +
+  labs(x = "Peso ao nascer (g)", y = "Densidade") + tema()
+```
+
+```{r}
+#| label: qq-peso
+#| fig-width: 8
+#| fig-height: 4
+library(qqplotr)
+ggplot(individuos, aes(sample = peso_nascimento)) +
+  stat_qq_band(fill = "#bce0db", alpha = 0.5) +
+  stat_qq_line(color = "#153246") +
+  stat_qq_point(color = "#007f7a") +
+  labs(x = "Quantis teóricos", y = "Quantis amostrais (g)") + tema()
+```
+
+```{r}
+#| label: shapiro-peso
+diagnostico <- shapiro.test(individuos$peso_nascimento)
+diagnostico
+```
+
+O teste acima fornece p = **`r numero(diagnostico$p.value, 4)`**. `r if (diagnostico$p.value < .05) "Ao nível de 5%, há evidência contra a normalidade do peso ao nascer." else "Ao nível de 5%, não há evidência suficiente para rejeitar a normalidade do peso ao nascer."` A decisão deve ser lida junto ao gráfico e ao tamanho amostral.
+
+## Resultados publicados completos
+
+### Comparação pareada entre métodos
+
+```{r}
+tabela_resultados()
+```
+
+Valores-p transcritos, não recalculados. Para o derramamento, o campo `p_limite = 0.001` no arquivo representa o **limite superior** da desigualdade publicada `p < 0,001`, não um p exato.
+
+### Comparação AIG e PIG
+
+```{r}
+subgrupos |>
+  left_join(select(metodos, id, variavel, unidade), by = "id") |>
+  transmute(Método = metodo, Variável = paste0(variavel," (",unidade,")"),
+    `AIG: média (DP)` = paste0(numero(aig_media,2)," (",numero(aig_dp,2),")"),
+    `PIG: média (DP)` = paste0(numero(pig_media,2)," (",numero(pig_dp,2),")"),
+    `Valor-p` = numero(p,3)) |>
+  gt(groupname_col = "Método") |>
+  tab_options(table.font.size = px(16))
+```
+
+Tabela 2 do artigo. AIG n = 18; PIG n = 12. ANOVA conforme a legenda original. A tabela em slides simplifica a exibição para médias e p; aqui os desvios padrão também estão presentes.
+
+### Sinais vitais
+
+```{r}
+sinais |>
+  select(variavel, unidade, metodo, momento, media, ic_margem, dp) |>
+  gt(groupname_col = "variavel") |>
+  fmt_number(columns = c(media,ic_margem,dp), decimals = 2, dec_mark = ",") |>
+  cols_label(ic_margem = "Margem de IC publicada", dp = "DP", media = "Média")
+```
+
+Transcrição das Figuras 4 e 5. As margens são as distâncias “±” publicadas e não IC da diferença entre métodos ou momentos. Não foram usadas para inferir significância pelo simples cruzamento de intervalos.
+
+## Como seriam os testes em R?
+
+Os blocos desta seção têm **`eval: false`**: ilustram a estrutura correta, mas não são executados, porque faltam os desfechos individuais. `dados_pareados` e `dados_longos` são nomes de bases que precisariam ser obtidas com os autores, e não arquivos presentes neste projeto.
+
+### Teste t pareado e diagnóstico das diferenças
+
+```{r}
+#| label: exemplo-t-pareado
+#| eval: false
+#| echo: true
+dados_pareados <- dados_pareados |>
+  mutate(diferenca = derramamento_seringa - derramamento_tsd)
+shapiro.test(dados_pareados$diferenca)
+t.test(dados_pareados$derramamento_seringa,
+       dados_pareados$derramamento_tsd,
+       paired = TRUE, alternative = "two.sided", conf.level = 0.95)
+```
+
+### ANOVA entre AIG e PIG
+
+```{r}
+#| label: exemplo-anova-grupos
+#| eval: false
+#| echo: true
+by(dados_pareados$volume_tsd, dados_pareados$grupo, shapiro.test)
+DescTools::LeveneTest(volume_tsd ~ grupo, data = dados_pareados)
+modelo <- aov(volume_tsd ~ grupo, data = dados_pareados)
+summary(modelo)
+# Com apenas dois grupos, não há necessidade de pós-teste para localizar o par.
+```
+
+O artigo utiliza ANOVA na Tabela 2. A aplicação acima depende de independência entre bebês, distribuição dos erros e variâncias. Welch seria uma alternativa se as variâncias não fossem assumidas iguais, conforme o contexto.
+
+### Três momentos do mesmo bebê
+
+```{r}
+#| label: exemplo-medidas-repetidas
+#| eval: false
+#| echo: true
+# Exemplo didático balanceado, para UMA técnica, com dados completos.
+dados_longos$id <- factor(dados_longos$id)
+dados_longos$momento <- factor(dados_longos$momento,
+                             levels = c("Antes", "Durante", "Depois"))
+modelo_repetido <- aov(saturacao ~ momento + Error(id/momento),
+                      data = dados_longos)
+summary(modelo_repetido)
+```
+
+Esse é apenas um esqueleto de ANOVA de medidas repetidas. A inferência ainda exige avaliar suposições, incluindo esfericidade no caso univariado com três momentos e correções quando necessárias. O artigo não apresenta os detalhes para confirmar a implementação. `TukeyHSD()` sobre uma ANOVA de grupos independentes não corrige a dependência dessas medidas. As comparações posteriores devem ser compatíveis com o modelo de medidas repetidas. Não afirmamos que este foi o código ou o modelo empregado pelos autores.
+
+## Sensibilidade à multiplicidade
+
+Os autores apresentam cinco testes t na Tabela 3 e não descrevem ajuste conjunto para essa família. Se os cinco fossem tratados como uma família com Bonferroni, o limiar seria:
+
+```{r}
+0.05 / nrow(metodos)
+```
+
+Sob essa escolha didática, `p < 0,001` continuaria abaixo de 0,01, mas `p = 0,029` não. Isso não substitui a análise original nem pressupõe que Bonferroni fosse obrigatório. Não calculamos um p ajustado exato para o derramamento, porque só foi publicado um limite.
+
+## Recursos das aulas utilizados
+
+| Aula | Aplicação neste projeto |
+|:--|:--|
+| Quarto | YAML, Reveal.js, CSS, capítulos, colunas, caixas, abas, links, equações, chunks com nomes e opções, notas do apresentador |
+| Tabelas | `read.xlsx()`, `select()`, `mutate()`, `tbl_summary()`, `modify_header()`, `bold_labels()`, `as_gt()`, `tab_options()` |
+| Gráficos e diagnósticos | `ggplot()`, `geom_density()`, `stat_qq_band()`, `stat_qq_line()`, `stat_qq_point()`, `shapiro.test()` |
+| Testes | Explicação de t pareado, ANOVA, Tukey e multiplicidade; códigos de testes não reproduzíveis marcados como não executáveis |
+| Extensão solicitada | Dashboard Quarto, seleção de indicadores e gráficos interativos locais |
+
+Não usamos qui-quadrado, Fisher ou V de Cramér para comparar estes desfechos quantitativos. Não usamos testes automáticos do `gtsummary` com resumos agregados para simular uma análise individual.
+
+## Informações da execução
+
+```{r}
+sessionInfo()
+```

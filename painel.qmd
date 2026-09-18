@@ -1,0 +1,59 @@
+---
+title: "TSD e seringa: resultados publicados"
+format:
+  dashboard:
+    theme: default
+    embed-resources: true
+    css: assets/custom.css
+    include-after-body: assets/interacoes.html
+    scrolling: true
+execute:
+  echo: false
+---
+
+```{r}
+#| include: false
+source("R/funcoes.R")
+```
+
+# Explorar o artigo
+
+## Row {height=16%}
+
+### Sobre os dados
+
+**30 bebês, dois métodos no mesmo bebê.** Explore os cinco desfechos alimentares e os sinais vitais nos três momentos. Os valores-p são os publicados, sem recálculo com dados simulados.
+
+[Slides](index.html) · [Caderno de apoio](apoio.html) · [Artigo: Araújo et al., 2016](https://doi.org/10.1590/2317-1782/20162015152)
+
+## Row {height=52%}
+
+### Alimentação: comparação pareada
+
+```{r}
+painel_comparacao()
+```
+
+### Sinais vitais: comparação temporal
+
+```{r}
+painel_sinais()
+```
+
+## Row {height=32%}
+
+### O que se pode concluir?
+
+**Derramamento:** 2,3% na TSD e 17,2% na seringa, diferença de 14,9 pontos percentuais. Teste t pareado: p < 0,001.
+
+**Três resultados alimentares sem significância:** isso não comprova equivalência dos métodos.
+
+**ANOVA temporal:** o artigo não esclarece o tratamento da dependência entre medidas dos mesmos bebês.
+
+### Origem e limites
+
+Médias, desvios padrão e margens de intervalo transcritos da Tabela 3 e das Figuras 4 e 5 (pp. 216–217). Os gráficos mostram **médias**, não indivíduos.
+
+O artigo identifica valores “±” como intervalos de confiança. Os painéis exibem apenas as médias para evitar confusão com desvios padrão ou com IC da diferença pareada.
+
+Resultados referentes ao procedimento estudado com seringa de **20 mL**. Não demonstram benefício de longo prazo.

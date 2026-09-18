@@ -1,5 +1,14 @@
 project:
-  title: "ApresentacaoSlides"
-
-editor: visual
-
+  type: default
+  output-dir: docs
+  render:
+    - index.qmd
+    - painel.qmd
+    - apoio.qmd
+  resources:
+    - .nojekyll
+lang: pt-BR
+execute:
+  warning: false
+  message: false
+  freeze: false
