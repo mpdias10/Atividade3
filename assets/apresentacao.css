@@ -1,0 +1,66 @@
+/* Visual dos slides: texto preto e detalhes verdes.
+   seagreen = verde; honeydew = verde bem claro; white = branco.
+   font-size: tamanho; padding: espaço interno; margin: espaço externo. */
+
+/* Texto e títulos */
+.reveal { font-family: "Segoe UI", Arial, sans-serif; font-size: 27px; color: black; }
+.reveal .slides { text-align: left; }
+.reveal h1, .reveal h2, .reveal h3 { font-family: inherit; color: black; text-transform: none; font-weight: 700; }
+.reveal h2 { font-size: 39px; margin-bottom: 25px; padding-bottom: 12px; border-bottom: 3px solid seagreen; }
+.reveal h3 { font-size: 27px; margin: 0 0 16px; }
+.reveal p, .reveal li { line-height: 1.35; }
+.reveal p { margin: 14px 0; }
+.reveal li { margin-bottom: 10px; }
+.reveal a { color: black; }
+.reveal .small { font-size: 22px; line-height: 1.35; }
+.reveal .lead { font-size: 32px; font-weight: 600; border-left: 5px solid seagreen; padding-left: 20px; }
+
+/* Capa centralizada */
+.reveal #title-slide { text-align: center; }
+.reveal #title-slide .title { font-size: 72px; margin-bottom: 28px; }
+.reveal #title-slide .subtitle { font-size: 31px; font-weight: 600; margin-bottom: 36px; }
+.reveal #title-slide .quarto-title-authors { justify-content: center; font-size: 29px; }
+.reveal #title-slide .institute { font-size: 23px; }
+.reveal #title-slide .date { font-size: 28px; margin-top: 28px; }
+
+/* Divisórias: fundo verde claro e letras pretas */
+.reveal .chapter { text-align: left; border-left: 8px solid seagreen; padding-left: 32px; }
+.reveal .chapter h1 { color: black; font-size: 64px; }
+.reveal .chapter p { color: black; font-size: 30px; }
+
+/* Duas colunas e quadros de explicação */
+.reveal .columns { gap: 26px; }
+.reveal .column { box-sizing: border-box; padding: 18px 20px; background: whitesmoke; border-top: 4px solid seagreen; border-radius: 6px; }
+.reveal .box-green, .reveal .box-blue, .reveal .box-orange, .reveal .alerta-metodo { background: honeydew; border-left: 4px solid seagreen; border-radius: 4px; padding: 13px 19px; margin: 18px 0; color: black; }
+.reveal .box-orange, .reveal .alerta-metodo { background: seashell; border-color: chocolate; }
+.reveal .box-green p, .reveal .box-blue p, .reveal .box-orange p, .reveal .alerta-metodo p { margin: 0; }
+.reveal .alerta-metodo { font-size: 22px; }
+.reveal .conceito-pareado { font-size: 27px; margin-bottom: 18px; }
+.reveal .formula-destaque { font-size: 34px; text-align: center; background: white; padding: 8px; border-radius: 4px; }
+.reveal .legenda-formula { font-size: 21px; border-top: 1px solid silver; padding-top: 8px; color: black; }
+
+/* Tabelas: espaço e contraste */
+.reveal table { width: 100%; font-size: 23px; color: black; }
+.reveal table th { border-bottom: 2px solid seagreen; padding: 10px; }
+.reveal table td { padding: 12px 10px; line-height: 1.3; }
+.reveal .gt_table { margin: 0 !important; }
+.reveal .gt_table th, .reveal .gt_table td { color: black; }
+
+/* Ajustes para slides com mais conteúdo */
+.reveal .motivacao .column { font-size: 24px; }
+.reveal .amostra .column { font-size: 24px; }
+.reveal .amostra .box-blue { font-size: 23px; }
+.reveal .pareado .column { font-size: 24px; }
+.reveal .pareado .column p { margin: 10px 0; }
+.reveal .pareado .formula-destaque p { margin: 0; }
+.reveal .limites { font-size: 23px; }
+.reveal .limites li { margin-bottom: 18px; line-height: 1.4; }
+.reveal .tukey table { font-size: 22px; }
+.reveal .tukey .box-orange { font-size: 21px; }
+.reveal .slide-number { color: black; background: transparent; font-size: 16px; }
+.reveal .progress { color: seagreen; height: 4px; }
+
+/* Encerramento centralizado, com texto preto. */
+.reveal .agradecimento { text-align: center; }
+.reveal .agradecimento h2 { font-size: 84px; border: 0; color: black; margin-bottom: 24px; }
+.reveal .agradecimento p { font-size: 32px; color: black; }

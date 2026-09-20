@@ -1,16 +1,18 @@
+<!-- Controles do dashboard: mudam o indicador e redesenham as médias publicadas.
+     As cores são nomes em inglês. Este código não executa testes estatísticos. -->
 <script>
 (() => {
 const fmt=(x,n=2)=>Number(x).toLocaleString('pt-BR',{minimumFractionDigits:n,maximumFractionDigits:n});
-const svgStart=(w,h,label)=>`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" aria-label="${label}"><style>text{font-family:Segoe UI,Arial,sans-serif;fill:#153246}</style>`;
+const svgStart=(w,h,label)=>`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" aria-label="${label}"><style>text{font-family:Segoe UI,Arial,sans-serif;fill:black}</style>`;
 document.querySelectorAll('.comparison-widget').forEach(widget=>{
  const rows=JSON.parse(widget.querySelector('script').textContent), select=widget.querySelector('select');
  rows.forEach(r=>{const o=document.createElement('option');o.value=r.id;o.textContent=r.variavel+' ('+r.unidade+')';select.appendChild(o)});
  select.value='derramado';
  const update=()=>{
   const r=rows.find(x=>x.id===select.value), max=r.unidade==='%'?100:Math.ceil(Math.max(r.tsd_media,r.seringa_media)*1.25);
-  const start=155,width=620,y=[60,140],color=['#007f7a','#c65b38'];
+  const start=155,width=620,y=[60,140],color=['steelblue','chocolate'];
   let s=svgStart(980,240,r.variavel+' por método');
-  [0,.25,.5,.75,1].forEach(v=>{let x=start+v*width;s+=`<line x1="${x}" x2="${x}" y1="40" y2="196" stroke="#dbe4e3"/><text x="${x}" y="220" text-anchor="middle" font-size="22">${fmt(v*max, max<=5?2:1)}</text>`});
+  [0,.25,.5,.75,1].forEach(v=>{let x=start+v*width;s+=`<line x1="${x}" x2="${x}" y1="40" y2="196" stroke="gainsboro"/><text x="${x}" y="220" text-anchor="middle" font-size="22">${fmt(v*max, max<=5?2:1)}</text>`});
   [r.tsd_media,r.seringa_media].forEach((v,i)=>{let w=v/max*width;s+=`<text x="140" y="${y[i]+27}" text-anchor="end" font-size="23">${['TSD','Seringa'][i]}</text><rect x="${start}" y="${y[i]}" width="${w}" height="42" rx="3" fill="${color[i]}"><title>${fmt(v)} ${r.unidade}</title></rect><text x="${start+w+12}" y="${y[i]+28}" font-weight="700" font-size="25">${fmt(v)} ${r.unidade}</text>`});
   s+='</svg>';widget.querySelector('.metric-chart').innerHTML=s;
   widget.querySelector('.metric-chart').setAttribute('aria-label',`${r.variavel}: TSD ${fmt(r.tsd_media)}, seringa ${fmt(r.seringa_media)} ${r.unidade}`);
@@ -26,9 +28,9 @@ document.querySelectorAll('.vitals-widget').forEach(widget=>{
   const data=rows.filter(r=>r.variavel===select.value),ox=select.value==='Saturação de oxigênio',lo=ox?92:130,hi=ox?97:152;
   const xs=[160,470,780],ys=v=>235-(v-lo)/(hi-lo)*180;
   let s=svgStart(980,300,select.value+' nos três momentos');
-  for(let i=0;i<5;i++){const v=lo+(hi-lo)*i/4,y=ys(v);s+=`<line x1="95" x2="880" y1="${y}" y2="${y}" stroke="#dbe4e3"/><text x="80" y="${y+6}" text-anchor="end" font-size="22">${fmt(v,1)}</text>`}
+  for(let i=0;i<5;i++){const v=lo+(hi-lo)*i/4,y=ys(v);s+=`<line x1="95" x2="880" y1="${y}" y2="${y}" stroke="gainsboro"/><text x="80" y="${y+6}" text-anchor="end" font-size="22">${fmt(v,1)}</text>`}
   ['Antes','Durante','Depois'].forEach((m,i)=>s+=`<text x="${xs[i]}" y="275" text-anchor="middle" font-size="22">${m}</text>`);
-  ['TSD','Seringa'].forEach((method,k)=>{const d=data.filter(r=>r.metodo===method),color=['#007f7a','#c65b38'][k];s+=`<text x="${340+k*170}" y="25" fill="${color}" style="fill:${color}" font-size="21" font-weight="700">${method}</text><polyline fill="none" stroke="${color}" stroke-width="3" ${k?'stroke-dasharray="8 5"':''} points="${d.map((r,i)=>`${xs[i]},${ys(r.media)}`).join(' ')}"/>`;d.forEach((r,i)=>s+=`<circle cx="${xs[i]}" cy="${ys(r.media)}" r="5" fill="${color}"><title>${method}, ${r.momento}: ${fmt(r.media)} ${r.unidade}</title></circle><text x="${xs[i]}" y="${ys(r.media)+(k?25:-13)}" text-anchor="middle" font-size="25">${fmt(r.media)}</text>`)});
+  ['TSD','Seringa'].forEach((method,k)=>{const d=data.filter(r=>r.metodo===method),color=['steelblue','chocolate'][k];s+=`<text x="${340+k*170}" y="25" fill="${color}" style="fill:black" font-size="21" font-weight="700">${method}</text><polyline fill="none" stroke="${color}" stroke-width="3" ${k?'stroke-dasharray="8 5"':''} points="${d.map((r,i)=>`${xs[i]},${ys(r.media)}`).join(' ')}"/>`;d.forEach((r,i)=>s+=`<circle cx="${xs[i]}" cy="${ys(r.media)}" r="5" fill="${color}"><title>${method}, ${r.momento}: ${fmt(r.media)} ${r.unidade}</title></circle><text x="${xs[i]}" y="${ys(r.media)+(k?25:-13)}" text-anchor="middle" font-size="25">${fmt(r.media)}</text>`)});
   widget.querySelector('.vital-chart').innerHTML=s+'</svg>';
   widget.querySelector('.vital-detail').innerHTML=ox?'<strong>Seringa: ANOVA p = 0,047.</strong> Tukey antes/depois: p = 0,05, conforme arredondamento do artigo. TSD: o texto relata ausência de diferença, sem informar o p exato.':'<strong>Ambos os métodos: ANOVA p &lt; 0,001.</strong> Tukey: antes/durante e antes/depois, p &lt; 0,001. São comparações temporais dentro de cada método.';
  };

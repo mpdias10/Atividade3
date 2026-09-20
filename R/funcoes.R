@@ -13,13 +13,16 @@ metodos <- read.xlsx("dados/dados_artigo.xlsx", sheet = "metodos")
 subgrupos <- read.xlsx("dados/dados_artigo.xlsx", sheet = "subgrupos")
 sinais <- read.xlsx("dados/dados_artigo.xlsx", sheet = "sinais") |>
   mutate(momento = factor(momento, levels = c("Antes", "Durante", "Depois")))
-cores <- c("TSD" = "#007f7a", "Seringa" = "#c65b38")
+# Cores dos métodos: azul para TSD e laranja para seringa.
+cores <- c("TSD" = "steelblue", "Seringa" = "chocolate")
 numero <- function(x, casas = 1) formatC(x, format = "f", digits = casas, decimal.mark = ",")
 tema <- function() theme_minimal(base_size = 17, base_family = "sans") +
-  theme(panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),
+  theme(text = element_text(color = "black"), axis.text = element_text(color = "black"),
+        panel.grid.minor = element_blank(), panel.grid.major.x = element_blank(),
         legend.position = "top", legend.title = element_blank(),
-        plot.title = element_text(face = "bold", color = "#153246"),
-        plot.background = element_rect(fill = "#fbfaf6", color = NA))
+        plot.title = element_text(face = "bold", color = "black"),
+        plot.background = element_rect(fill = "whitesmoke", color = NA))
+# Monta a tabela de médias e valores-p publicados; destaca as linhas significativas.
 tabela_resultados <- function() {
   metodos |>
     transmute(Indicador = paste0(variavel, " (", unidade, ")"),
@@ -30,11 +33,12 @@ tabela_resultados <- function() {
     cols_align(align = "center", columns = c(TSD, Seringa, `Valor-p`)) |>
     cols_width(Indicador ~ pct(40), TSD ~ pct(22), Seringa ~ pct(22), `Valor-p` ~ pct(16)) |>
     tab_spanner(label = "Média (desvio padrão)", columns = c(TSD, Seringa)) |>
-    tab_style(style = cell_text(weight = "bold", color = "#007f7a"),
+    tab_style(style = cell_text(weight = "bold", color = "black"),
               locations = cells_body(rows = c(1,3), columns = everything())) |>
     tab_options(table.font.size = px(23), data_row.padding = px(12),
-                table.width = pct(100), table.background.color = "#fbfaf6")
+                table.width = pct(100), table.background.color = "whitesmoke")
 }
+# Organiza as médias de AIG e PIG lado a lado.
 tabela_subgrupos <- function() {
   subgrupos |>
     left_join(select(metodos, id, variavel, unidade), by = "id") |>
@@ -52,11 +56,12 @@ tabela_subgrupos <- function() {
     cols_move(columns = p_TSD, after = Comparacao_TSD) |>
     tab_spanner(label = "TSD", columns = c(Comparacao_TSD,p_TSD)) |>
     tab_spanner(label = "Seringa", columns = c(Comparacao_Seringa,p_Seringa)) |>
-    tab_style(style = cell_text(weight = "bold", color = "#007f7a"),
+    tab_style(style = cell_text(weight = "bold", color = "black"),
               locations = cells_body(rows = 1, columns = c(Comparacao_TSD,p_TSD))) |>
     tab_options(table.font.size = px(21), data_row.padding = px(10),
-                table.width = pct(100), table.background.color = "#fbfaf6")
+                table.width = pct(100), table.background.color = "whitesmoke")
 }
+# Desenha as médias dos sinais vitais nos três momentos.
 grafico_sinais <- function() {
   sinais |>
     mutate(faceta = paste0(variavel, " (", unidade, ")")) |>
@@ -65,6 +70,7 @@ grafico_sinais <- function() {
     facet_wrap(~faceta, scales = "free_y") +
     scale_color_manual(values = cores) + labs(x = NULL, y = "Média publicada") + tema()
 }
+# Envia as médias publicadas ao painel interativo; não recalcula testes.
 painel_comparacao <- function(exibir_nota = TRUE) {
   dados <- jsonlite::toJSON(metodos, dataframe = "rows", auto_unbox = TRUE)
   htmltools::HTML(paste0('<div class="comparison-widget"><script type="application/json">',dados,
@@ -72,6 +78,7 @@ painel_comparacao <- function(exibir_nota = TRUE) {
     '<div class="metric-chart" role="img"></div><div class="metric-detail" aria-live="polite"></div>',
     if (exibir_nota) '<p class="widget-note">Médias publicadas. Diferença = seringa − TSD. Valor-p do teste t pareado, conforme Tabela 3. Sem recálculo do teste.</p>' else '', '</div>'))
 }
+# Envia as médias dos sinais vitais ao painel interativo.
 painel_sinais <- function() {
   dados <- jsonlite::toJSON(sinais, dataframe = "rows", auto_unbox = TRUE)
   htmltools::HTML(paste0('<div class="vitals-widget"><script type="application/json">',dados,

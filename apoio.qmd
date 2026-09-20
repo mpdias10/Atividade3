@@ -63,7 +63,7 @@ Usamos **peso ao nascer**, disponível na Tabela 1, para demonstrar as funções
 #| fig-width: 8
 #| fig-height: 4
 ggplot(individuos, aes(x = peso_nascimento)) +
-  geom_density(fill = "#007f7a", alpha = 0.3) +
+  geom_density(fill = "steelblue", alpha = 0.3) +
   labs(x = "Peso ao nascer (g)", y = "Densidade") + tema()
 ```
 
@@ -73,9 +73,9 @@ ggplot(individuos, aes(x = peso_nascimento)) +
 #| fig-height: 4
 library(qqplotr)
 ggplot(individuos, aes(sample = peso_nascimento)) +
-  stat_qq_band(fill = "#bce0db", alpha = 0.5) +
-  stat_qq_line(color = "#153246") +
-  stat_qq_point(color = "#007f7a") +
+  stat_qq_band(fill = "lightsteelblue", alpha = 0.5) +
+  stat_qq_line(color = "darkslategray") +
+  stat_qq_point(color = "steelblue") +
   labs(x = "Quantis teóricos", y = "Quantis amostrais (g)") + tema()
 ```
 

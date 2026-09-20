@@ -8,7 +8,7 @@ date-format: "DD/MM/YYYY"
 format:
   revealjs:
     theme: default
-    css: assets/custom.css
+    css: assets/apresentacao.css
     slide-number: c/t
     incremental: false
     transition: slide
@@ -21,36 +21,138 @@ format:
     embed-resources: true
     slide-level: 2
     navigation-mode: linear
-    include-after-body: assets/interacoes.html
     code-overflow: wrap
     html-math-method: mathml
 execute:
   echo: false
+  warning: false
+  message: false
 ---
 
 ```{r}
 #| label: preparacao
 #| include: false
-source("R/funcoes.R")
+
+library(dplyr)
+library(gt)
+library(ggplot2)
+
+tabela_resultados <- function() {
+  df <- tibble::tibble(
+    Variavel = c("Volume oferecido (%)", "Volume oferecido em 5 min (%)",
+                 "Volume derramado (%)", "Relacao volume/tempo (mL/min)", "Tempo (min)"),
+    TSD = c("78,9 ± 21,9", "37,6 ± 11,2", "2,3 ± 4,8", "3,20 ± 0,99", "10,49 ± 3,17"),
+    Seringa = c("88,8 ± 13,3", "39,3 ± 8,8", "17,2 ± 7,3", "3,31 ± 0,76", "11,38 ± 2,71"),
+    p = c("0,029", "0,400", "< 0,001", "0,515", "0,135"),
+    signif = c(TRUE, FALSE, TRUE, FALSE, FALSE)
+  )
+  names(df)[1] <- "Variável"
+  names(df)[4] <- "Valor de p"
+
+  gt(dplyr::select(df, -signif)) |>
+    tab_style(
+      style = cell_fill(color = "honeydew"),
+      locations = cells_body(rows = which(df$signif))
+    ) |>
+    tab_style(
+      style = cell_text(weight = "bold"),
+      locations = cells_column_labels()
+    ) |>
+    tab_source_note(source_note = "Valores: média ± desvio-padrão.") |>
+    tab_options(table.font.size = px(24), data_row.padding = px(12), source_notes.font.size = px(17),
+                table.width = pct(100), table.font.color = "black")
+}
+
+tabela_subgrupos <- function() {
+  df <- tibble::tibble(
+    Variavel = c("Volume oferecido (%)", "Volume oferecido em 5 min (%)",
+                 "Volume derramado (%)", "Relacao volume/tempo (mL/min)", "Tempo (min)"),
+    aig_tsd = c("69,6 ± 22,0", "35,0 ± 10,5", "2,3 ± 4,1", "3,04 ± 0,97", "9,90 ± 3,14"),
+    pig_tsd = c("92,8 ± 13,0", "41,5 ± 11,4", "2,4 ± 5,8", "3,42 ± 1,01", "11,38 ± 3,13"),
+    p_tsd   = c("0,003", "0,122", "0,965", "0,316", "0,218"),
+    aig_ser = c("87,0 ± 14,4", "38,6 ± 8,6", "16,6 ± 7,6", "3,34 ± 0,68", "11,27 ± 2,91"),
+    pig_ser = c("91,5 ± 11,5", "40,3 ± 9,5", "17,9 ± 7,1", "3,27 ± 0,90", "11,56 ± 2,49"),
+    p_ser   = c("0,383", "0,608", "0,634", "0,827", "0,781"),
+    signif_tsd = c(TRUE, FALSE, FALSE, FALSE, FALSE)
+  )
+  names(df)[1] <- "Variável"
+
+  gt(dplyr::select(df, -signif_tsd)) |>
+    cols_label(
+      aig_tsd = "AIG", pig_tsd = "PIG", p_tsd = "p",
+      aig_ser = "AIG", pig_ser = "PIG", p_ser = "p"
+    ) |>
+    tab_spanner(label = "TSD", columns = c(aig_tsd, pig_tsd, p_tsd)) |>
+    tab_spanner(label = "Seringa", columns = c(aig_ser, pig_ser, p_ser)) |>
+    tab_style(
+      style = cell_fill(color = "honeydew"),
+      locations = cells_body(columns = c(aig_tsd, pig_tsd, p_tsd), rows = which(df$signif_tsd))
+    ) |>
+    tab_source_note(source_note = "Valores: média ± desvio-padrão. AIG = adequado para a idade gestacional, PIG = pequeno para a idade gestacional.") |>
+    tab_options(table.font.size = px(21), data_row.padding = px(11), source_notes.font.size = px(16),
+                table.width = pct(100), table.font.color = "black")
+}
+
+grafico_sinais <- function() {
+  dados <- tibble::tibble(
+    Parametro = rep(c("Saturacao de oxigenio (%)", "Frequencia cardiaca (bpm)"), each = 6),
+    Metodo = rep(rep(c("TSD", "Seringa"), each = 3), 2),
+    Momento = rep(c("Antes", "Durante", "Depois"), 4),
+    Valor = c(
+      95.87, 95.75, 95.67,
+      93.23, 94.37, 95.90,
+      134.2, 149.17, 145.50,
+      133.6, 148.07, 144.73
+    )
+  )
+  dados$Momento <- factor(dados$Momento, levels = c("Antes", "Durante", "Depois"))
+
+  ggplot(dados, aes(x = Momento, y = Valor, color = Metodo, group = Metodo)) +
+    geom_line(linewidth = 1) +
+    geom_point(size = 2.4) +
+    facet_wrap(~Parametro, scales = "free_y") +
+    scale_color_manual(values = c(TSD = "seagreen", Seringa = "chocolate")) +
+    labs(x = NULL, y = NULL, color = NULL) +
+    theme_minimal(base_size = 17) +
+    theme(legend.position = "top", text = element_text(color = "black"),
+          axis.text = element_text(color = "black"), panel.grid.minor = element_blank())
+}
+
+painel_comparacao <- function(exibir_nota = TRUE) {
+  dados <- tibble::tibble(
+    Variavel = rep(c("Volume oferecido (%)", "Volume derramado (%)", "Tempo (min)"), 2),
+    Metodo = rep(c("TSD", "Seringa"), each = 3),
+    Valor = c(78.9, 2.3, 10.49, 88.8, 17.2, 11.38)
+  )
+  dados$Variavel <- factor(dados$Variavel,
+                            levels = c("Volume oferecido (%)", "Volume derramado (%)", "Tempo (min)"))
+
+  ggplot(dados, aes(x = Metodo, y = Valor, fill = Metodo)) +
+    geom_col(width = 0.6) +
+    geom_text(aes(label = gsub("\\.", ",", as.character(Valor))), vjust = -0.6, size = 5) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.18))) +
+    facet_wrap(~Variavel, scales = "free_y") +
+    scale_fill_manual(values = c(TSD = "seagreen", Seringa = "chocolate")) +
+    labs(x = NULL, y = NULL, fill = NULL) +
+    theme_minimal(base_size = 17) +
+    theme(legend.position = "top", text = element_text(color = "black"),
+          axis.text = element_text(color = "black"), panel.grid.minor = element_blank())
+}
 ```
 
-# Introdução {.chapter background-color="#153246"}
+# Introdução {.chapter background-color="honeydew"}
 
 Como os métodos de oferta se relacionam com o derramamento de leite e os sinais vitais?
 
-::: notes
-Tempo: 10 segundos. Anunciar o problema e passar ao artigo. A questão é comparar métodos de oferta, e não fazer uma recomendação clínica individual.
-:::
-
 ## O artigo e a pergunta de pesquisa
 
-::: small
+::: {.small}
 **Volume derramado, saturação de oxigênio e frequência cardíaca durante a alimentação de recém-nascidos prematuros: comparação entre dois métodos alternativos de oferta**
 
-Viviane Castro de Araújo, Ana Caroline Martinez Maciel, Mariana de Almeida Ribeiro Paiva e Ana Cristina Barreto Bezerra.
+**Autoras:** Viviane Castro de Araújo, Ana Caroline Martinez Maciel, Mariana de Almeida Ribeiro Paiva e Ana Cristina Barreto Bezerra.
 :::
 
-::: small
+::: {.small}
 **Motivação:** seringa e técnica sonda-dedo eram usadas na rotina neonatal, mas faltavam evidências sobre a perda de leite e a resposta dos sinais vitais.
 :::
 
@@ -58,21 +160,21 @@ Viviane Castro de Araújo, Ana Caroline Martinez Maciel, Mariana de Almeida Ribe
 **Objetivo:** comparar seringa e **TSD (técnica sonda-dedo)** quanto à dieta oferecida e derramada, à saturação de oxigênio e à frequência cardíaca.
 :::
 
-::: notes
-Tempo: 35 segundos. Ler apenas a ideia do título, não os quatro nomes completos. O estudo compara duas formas alternativas de alimentação utilizadas na unidade neonatal. Os autores investigam tanto o desempenho alimentar quanto a resposta fisiológica durante a oferta.
-:::
+## Motivação e métodos de oferta {.motivacao}
 
-## Motivação e métodos de oferta
-
-::::: columns
+:::: columns
 ::: {.column width="49%"}
+
 ### Por que investigar?
+Prematuros podem apresentar dificuldades na alimentação oral, especialmente durante a transição da sonda para a via oral.
 
-- A imaturidade pode dificultar a alimentação oral dos prematuros.
-- Métodos alternativos integram a transição alimentar e situações de ausência da mãe.
-- O derramamento reduz a quantidade de leite efetivamente aproveitada.
+A seringa e a técnica sonda-dedo (TSD) são utilizadas como alternativas de alimentação, mas havia pouca evidência sobre seus resultados.
+
+- quantidade de dieta oferecida;
+- quantidade de dieta derramada;
+- saturação de oxigênio;
+- frequência cardíaca.
 :::
-
 ::: {.column width="47%"}
 ### O que foi comparado?
 
@@ -80,76 +182,73 @@ Tempo: 35 segundos. Ler apenas a ideia do título, não os quatro nomes completo
 
 **TSD (técnica sonda-dedo):** sonda fixada ao dedo mínimo do avaliador, conectada a uma seringa. A oferta acompanha a sucção.
 :::
-:::::
+::::
 
-::: notes
-Tempo: 40 segundos. Explicar que a seringa é a de 20 mL usada naquele serviço. Na técnica sonda-dedo também existe uma seringa, mas a sonda e a sucção modificam a forma de oferta. O artigo parte da hipótese de que o método pode alterar a perda de leite e a estabilidade fisiológica. Não precisamos mostrar fotografias de bebês para entender o desenho.
-:::
-
-# Metodologia estatística {.chapter background-color="#153246"}
+# Metodologia estatística {.chapter background-color="honeydew"}
 
 O desenho do estudo determina a escolha do teste.
 
-::: notes
-Tempo: 5 segundos. Introduzir a característica decisiva: o pareamento.
+## Amostra e critérios de inclusão {.amostra}
+
+:::: columns
+
+::: {.column width="48%"}
+
+### Amostra
+
+**30 prematuros**
+- 13 meninas
+- 17 meninos
+- Unidade neonatal de Porto Velho
+
+**18 AIG** — peso adequado para a idade gestacional
+
+**12 PIG** — peso pequeno para a idade gestacional
+
 :::
 
-## Amostra e desenho pareado {.amostra-explicada}
+::: {.column width="48%"}
 
-::::: metodo-grid
-::: metodo-card
-<h3>Quem participou e como?</h3>
+### Seleção
 
-**30 prematuros:** 13 meninas e 17 meninos, em uma unidade neonatal de Porto Velho.
+Foram incluídos bebês:
 
-**Quase-experimental:** os pesquisadores aplicaram os dois métodos, sem sorteio da ordem relatado. Todos receberam seringa e depois TSD.
+- com idade corrigida **≥ 34 semanas**;
+- recebendo alimentação oral há pelo menos **2 dias**;
+- em estado de alerta e clinicamente estáveis.
 
-**18 AIG:** peso adequado para a idade gestacional.\
-**12 PIG:** peso pequeno para a idade gestacional.
+Também foram excluídas algumas condições clínicas que poderiam interferir na alimentação.
 
-São classificações do peso em relação ao tempo de gestação.
 :::
 
-::: metodo-card
-<h3>Critérios de inclusão</h3>
+::::
 
-- Prematuros com idade corrigida **≥ 34 semanas** na avaliação.
-- Alimentação por via oral havia **pelo menos 2 dias**.
-- Em estado de alerta e clinicamente estáveis, sem necessidade de monitoramento cardiorrespiratório ou hemodinâmico.
-- Sem alterações neurológicas, doença pulmonar crônica, cardiopatia congênita ou malformação craniofacial; sem soropositividade para HIV.
-:::
-:::::
+::: {.box-blue}
 
-::: {.box-blue .small}
-**30 pares:** cada bebê recebeu os dois métodos na mesma manhã e foi seu próprio controle. As mães consentiram com a participação.
+**Estudo quase-experimental:** os pesquisadores aplicaram os dois métodos aos mesmos bebês. Cada bebê foi seu próprio controle.
+
+**Ordem:** seringa → TSD.
+
 :::
 
-::: notes
-Tempo: 60 segundos. Quase-experimental significa que houve intervenção dos pesquisadores, mas não a randomização característica de um experimento aleatorizado. Aqui, a ordem foi seringa e depois TSD, sem sorteio relatado. AIG e PIG relacionam o peso à idade gestacional, não são sinônimos de prematuridade. Foram selecionados, ao longo de um mês, os bebês elegíveis. A idade corrigida é a expressão usada no artigo para a idade gestacional no momento da avaliação. Ler os critérios principais e destacar que a amostra era clinicamente estável. Cada bebê gerou um par de observações.
-:::
-
-## Variáveis e comparações
+## Variáveis e comparações {.scrollable}
 
 | Papel | Variáveis | Comparação |
-|:-----------------------|:-----------------------|:-----------------------|
+|:--|:--|:--|
 | Fator principal | Método de oferta: TSD e seringa | Duas condições no mesmo bebê |
 | Desfechos alimentares | Volumes oferecido e derramado (%), volume em 5 min (%), volume/tempo (mL/min) e tempo (min) | Teste t pareado |
 | Desfechos fisiológicos | Saturação de oxigênio (%) e frequência cardíaca (bpm) | Antes, durante e depois, em cada método |
 | Subgrupos | AIG (18) e PIG (12) | Comparação entre grupos distintos |
 
-::: notes
-Tempo: 40 segundos. O termo porcentagem descreve a unidade de uma medida quantitativa por bebê. Portanto, comparar as médias desses percentuais com o teste t não é o mesmo que um teste para proporções binárias de sucesso e fracasso. Separar a comparação entre métodos, a comparação entre subgrupos e a comparação ao longo do tempo evita escolher o teste errado.
-:::
-
-## Teste t pareado: a diferença em cada bebê {.teste-pareado}
+## Teste t pareado: a diferença em cada bebê {.pareado}
 
 ::: conceito-pareado
 **30 bebês → 30 diferenças:** $D_i = Y_{i,\text{seringa}} - Y_{i,\text{TSD}}$
 :::
 
-::::::: metodo-grid
-:::: metodo-card
-<h3>O que testamos?</h3>
+:::: columns
+::: {.column width="49%"}
+### O que foi testado?
 
 $H_0: \mu_D = 0$ — sem diferença média.
 
@@ -160,35 +259,30 @@ $$t = \frac{\bar D}{s_D / \sqrt{30}}$$
 :::
 
 **29 graus de liberdade · α = 0,05**
-::::
-
-:::: metodo-card
-<h3>Quando o teste é adequado?</h3>
+:::
+::: {.column width="47%"}
+### Quando o teste é adequado?
 
 - Medidas pareadas no mesmo bebê.
 - Independência entre os bebês.
 - Diferenças aproximadamente normais, com atenção a valores extremos.
 
 ::: legenda-formula
-$\bar D$: média das diferenças.\
+$\bar D$: média das diferenças.
 $s_D$: desvio padrão das diferenças.
 :::
+:::
 ::::
-:::::::
 
 ::: alerta-metodo
-**Normalidade no artigo:** os autores afirmam que os resultados tiveram distribuição normal, mas não informam teste, valor-p ou gráfico de diagnóstico. Não sabemos como verificaram essa condição.
+**Normalidade no artigo:** os autores afirmam que os resultados apresentaram distribuição normal, mas não descrevem como essa condição foi verificada. O artigo não informa teste de normalidade, p-valor ou gráfico de diagnóstico.
 :::
 
-::: notes
-Tempo: 55 segundos. O teste trabalha com as 30 diferenças individuais. Não basta conhecer o desvio padrão de cada método isoladamente. Precisamos do desvio padrão das diferenças, que depende da relação entre as duas medidas de cada bebê. A normalidade relevante para o teste pareado é a das diferenças. O artigo não publica esses dados, então não podemos refazer o teste pareado a partir apenas da Tabela 3.
-:::
+## ANOVA e Tukey: duas aplicações no artigo {.scrollable}
 
-## ANOVA e Tukey: duas aplicações no artigo {.anova-aplicacoes}
-
-::::: metodo-grid
-::: metodo-card
-<h3>AIG versus PIG</h3>
+:::: columns
+::: {.column width="49%"}
+### AIG versus PIG
 
 **Dois grupos distintos**, comparados em cada método.
 
@@ -196,11 +290,10 @@ $$H_0: \mu_{AIG} = \mu_{PIG}$$
 
 A Tabela 2 identifica o teste como **ANOVA**.
 
-Com dois grupos, a ANOVA clássica equivale ao teste t com variância comum: $F = t^2$.
+Com dois grupos, a ANOVA clássica equivale ao teste t com variância comum: **$F = t^2$**.
 :::
-
-::: metodo-card
-<h3>Antes, durante e depois</h3>
+::: {.column width="47%"}
+### Antes, durante e depois
 
 **Três momentos nos mesmos bebês**, em cada método.
 
@@ -210,23 +303,27 @@ $$H_0: \mu_{antes} = \mu_{durante} = \mu_{depois}$$
 
 **Tukey:** identifica quais pares de momentos diferem.
 :::
-:::::
+::::
 
 ::: alerta-metodo
 **Atenção às medidas repetidas:** o artigo não esclarece se a ANOVA considerou a dependência entre os momentos. Uma ANOVA de grupos independentes não corresponde a esse desenho.
 :::
 
-::: notes
-Tempo: 50 segundos. Apresentar primeiro a comparação à esquerda e depois a comparação à direita. Na primeira aplicação, AIG e PIG são grupos independentes e a tabela informa ANOVA. Na segunda, há três momentos nos mesmos bebês. O artigo cita ANOVA e Tukey, mas não detalha a estrutura do modelo. Não é possível afirmar que o modelo estava errado nem confirmar que foi adequado. O ponto crítico é reconhecer que uma ANOVA comum de grupos independentes não resolveria a dependência. Pearson também aparece no artigo, mas fica fora do aprofundamento desta apresentação para respeitar o recorte da atividade.
+## Cada teste responde a uma pergunta diferente {.scrollable}
+
+| Teste usado | Estrutura dos dados | Pergunta que ele responde |
+|:--|:--|:--|
+| **Teste t pareado** | 30 diferenças, um par por bebê | O método de oferta (TSD vs. seringa) muda a média de uma variável, **no mesmo bebê**? |
+| **ANOVA (grupos)** | AIG e PIG são grupos diferentes | Bebês AIG e PIG **diferem entre si**, dentro de um mesmo método? |
+| **ANOVA (momentos) + Tukey** | Antes/durante/depois, no mesmo bebê, em cada método | A variável muda **ao longo do tempo** dentro do mesmo método? Se muda, **entre quais momentos**? |
+
+::: {.box-blue .small}
+Antes de olhar qualquer p-valor, a pergunta certa já indica o teste certo: comparar o mesmo bebê em duas condições pede teste pareado; comparar grupos diferentes pede ANOVA entre grupos; comparar vários momentos no mesmo bebê pede ANOVA de medidas repetidas (com Tukey para localizar a diferença).
 :::
 
-# Resultados {.chapter background-color="#153246"}
+# Resultados {.chapter background-color="honeydew"}
 
 Resultados publicados, com interpretação das comparações.
-
-::: notes
-Tempo: 5 segundos. Introduzir a tabela principal.
-:::
 
 ## Comparação dos métodos: tabela principal
 
@@ -235,24 +332,19 @@ Tempo: 5 segundos. Introduzir a tabela principal.
 tabela_resultados()
 ```
 
-::: small
-**Linhas em verde:** diferenças estatisticamente significativas (p \< 0,05) no teste t pareado. Volume oferecido e derramado foram maiores com a seringa.
+::: {.box-green .small}
+**Linhas em verde = diferença estatisticamente significativa (p < 0,05) no teste t pareado.** Linhas sem cor = o teste não encontrou evidência suficiente de diferença a 5%. Volume oferecido e derramado foram maiores com a seringa.
 :::
 
-::: notes
-Tempo: 55 segundos. Ler primeiro a linha do derramamento: 2,3% na TSD e 17,2% na seringa, p menor que 0,001. O volume oferecido também foi maior com a seringa, com p de 0,029. As outras três comparações não atingiram significância a 5%. Não dizer que os métodos são iguais nessas variáveis: o teste apenas não encontrou evidência suficiente de diferença. Os parênteses são desvios padrão, não intervalos de confiança.
-:::
-
-## Painel interativo: tamanho da diferença
+## Comparação visual entre os métodos
 
 ```{r}
 #| label: comparador-interativo
+#| fig-width: 12
+#| fig-height: 4.5
+#| out-width: "100%"
 painel_comparacao(exibir_nota = FALSE)
 ```
-
-::: notes
-Tempo: 35 segundos. O painel começa no derramamento. A diferença é de 14,9 pontos percentuais, calculada pela subtração das médias publicadas. Trocar para volume oferecido e depois para tempo para contrastar um resultado significativo com outro não significativo. Não confundir pontos percentuais com redução percentual relativa. O gráfico usa médias, não observações individuais, e não recalcula os testes.
-:::
 
 ## AIG e PIG: comparação de subgrupos
 
@@ -261,12 +353,8 @@ Tempo: 35 segundos. O painel começa no derramamento. A diferença é de 14,9 po
 tabela_subgrupos()
 ```
 
-::: small
+::: {.small}
 Na TSD, o volume oferecido foi maior no grupo **PIG: 92,8%**, contra **69,6% no AIG** (p = 0,003).
-:::
-
-::: notes
-Tempo: 40 segundos. Explicar que aqui a comparação mudou: comparamos grupos distintos em cada técnica, não os dois métodos dentro de cada bebê. O achado significativo está no volume oferecido com TSD. A diferença de 23,2 pontos percentuais é descritiva. O artigo propõe possíveis explicações relacionadas à experiência de estimulação oral, mas não mediu a quantidade desses estímulos, então isso continua sendo uma hipótese.
 :::
 
 ## Sinais vitais ao longo da alimentação
@@ -281,78 +369,55 @@ Tempo: 40 segundos. Explicar que aqui a comparação mudou: comparamos grupos di
 grafico_sinais()
 ```
 
-::: small
+::: {.small}
 **Linha verde: TSD. Linha laranja: seringa.** Cada ponto é a média dos 30 bebês naquele momento; as linhas conectam essas médias. A frequência cardíaca aumentou durante a oferta em ambos os métodos.
 :::
 
-::: notes
-Tempo: 40 segundos. Apontar a elevação da frequência cardíaca em relação ao repouso e o comportamento da saturação. Explicar que o gráfico de médias não mostra a variabilidade individual nem permite testar as diferenças sozinho. As escalas foram ampliadas para visualizar a variação e não devem sugerir que pequenas diferenças sejam clinicamente grandes. Os autores interpretam os valores como dentro da normalidade no contexto do estudo.
-:::
-
-## ANOVA global e comparações de Tukey
+## ANOVA global e comparações de Tukey {.tukey}
 
 | Parâmetro | Método | ANOVA relatada | Tukey relatado |
-|:-----------------|:-----------------|:-----------------|:-----------------|
+|:--|:--|:--|:--|
 | Saturação | TSD | Sem diferença; p exato não informado | Não detalhado |
 | Saturação | Seringa | **p = 0,047** | Antes / depois: **p = 0,05** |
-| Frequência cardíaca | TSD | **p \< 0,001** | Antes / durante e antes / depois: **p \< 0,001** |
-| Frequência cardíaca | Seringa | **p \< 0,001** | Antes / durante e antes / depois: **p \< 0,001** |
+| Frequência cardíaca | TSD | **p < 0,001** | Antes / durante e antes / depois: **p < 0,001** |
+| Frequência cardíaca | Seringa | **p < 0,001** | Antes / durante e antes / depois: **p < 0,001** |
 
 ::: {.box-orange .small}
-**Como interpretar:** a ANOVA compara os três momentos; Tukey identifica os pares que diferem. Na saturação com seringa, p = 0,05 está no limite de 5% na precisão publicada. Isso, por si só, não demonstra prejuízo clínico.
+**Como ler esta tabela:** a coluna ANOVA responde "existe alguma diferença entre os três momentos?"; a coluna Tukey responde "entre quais momentos específicos ela está?". Na saturação com seringa, a ANOVA já indica diferença (p = 0,047) e o Tukey aponta que ela está entre antes e depois — mas com p = 0,05, exatamente no limite dos 5%, na precisão que o artigo publica. Isso pede cautela na leitura: é uma diferença estatisticamente limítrofe, não uma alteração clinicamente grande — os próprios autores classificam os valores de saturação como dentro da normalidade.
 :::
 
-::: notes
-Tempo: 40 segundos. A ANOVA da saturação com seringa apresentou p de 0,047: há evidência de diferença entre os três momentos. Tukey localizou a comparação antes e depois, reportada como p de 0,05. Como não temos mais casas decimais, devemos apresentá-la como limítrofe, sem tratar esse número como evidência forte. Na frequência cardíaca, ambos os métodos apresentaram diferenças antes versus durante e antes versus depois. Esses testes comparam momentos dentro de cada técnica, não comparam diretamente TSD e seringa. Os autores consideraram os sinais vitais dentro da normalidade clínica.
-:::
+# Conclusão {.chapter background-color="honeydew"}
 
-# Conclusão {.chapter background-color="#153246"}
-
-O que os resultados sustentam e quais são seus limites?
-
-::: notes
-Tempo: 5 segundos. Passar da descrição dos resultados para a avaliação crítica.
-:::
-
-## Limites da interpretação {.limites-claros}
-
-- **A ordem pode influenciar:** todos receberam seringa primeiro. Cansaço, adaptação ou o momento da alimentação podem contribuir para as diferenças.
-- **O acompanhamento foi curto:** cada bebê foi observado em duas sessões no mesmo dia. Não se avaliou ganho de peso nem manutenção do aleitamento.
-- **O alcance é restrito:** foram 30 bebês clinicamente estáveis de um único hospital, com seringa de 20 mL. O resultado não se estende automaticamente a outros contextos.
-- **Faltam detalhes estatísticos:** não se explica como a normalidade foi verificada nem como a ANOVA tratou as medidas repetidas.
-- **Houve vários testes:** as cinco comparações alimentares aumentam a chance de algum resultado significativo por acaso; não há ajuste entre elas descrito.
-
-::: notes
-Tempo: 50 segundos. Explicar a consequência de cada limitação. O pareamento reduz diferenças individuais, mas não separa o efeito do método do possível efeito da ordem. Duas sessões em um dia não permitem avaliar benefícios futuros. A normalidade é afirmada sem procedimento descrito, e não sabemos qual modelo temporal foi usado. Vários testes também pedem cautela. Essas questões limitam o alcance da conclusão; não significam que todos os resultados sejam inválidos.
-:::
-
-## Que perguntas os testes responderam? {.perguntas-testes}
+## Que perguntas os testes responderam? {.scrollable}
 
 | Pergunta | Teste e evidência | Resposta no estudo |
-|:-----------------------|:-----------------------|:-----------------------|
-| O derramamento médio difere entre os métodos? | **t pareado:** p \< 0,001 | Há evidência de diferença. TSD: **2,3%**; seringa: **17,2%**. |
-| Na TSD, AIG e PIG recebem o mesmo volume médio? | **ANOVA:** p = 0,003 | Há evidência de diferença. AIG: **69,6%**; PIG: **92,8%**. |
-| A frequência cardíaca média muda ao longo da oferta? | **ANOVA:** p \< 0,001 em cada método; **Tukey:** p \< 0,001 nos pares destacados | Em ambos, difere entre **antes e durante** e entre **antes e depois**. |
+|:--|:--|:--|
+| O derramamento difere entre os métodos? | **t pareado:** p < 0,001 | TSD: **2,3%**; seringa: **17,2%**. |
+| Na TSD, AIG e PIG recebem o mesmo volume? | **ANOVA:** p = 0,003 | AIG: **69,6%**; PIG: **92,8%**. |
+| A frequência cardíaca muda ao longo da oferta? | **ANOVA/Tukey:** p < 0,001 | Sobe entre **antes e durante/depois**, nos dois métodos. |
 
 ::: {.box-green .small}
-**Exemplo completo:** no derramamento, rejeitamos a hipótese de diferença média zero a 5%. A diferença observada foi de **14,9 pontos percentuais**, com menor média na TSD.
-:::
-
-::: notes
-Tempo: 45 segundos. Explicar a sequência pergunta, hipótese, teste e resposta. Para o derramamento, a hipótese nula é média das diferenças igual a zero. Como o valor-p publicado é menor que 0,001, rejeitamos essa hipótese ao nível de 5%. As médias mostram a direção e o tamanho da diferença: 14,9 pontos percentuais a menos na TSD. O teste não fornece a probabilidade de a hipótese nula ser verdadeira e não elimina as limitações do desenho. Na comparação AIG/PIG, a pergunta é sobre dois grupos distintos. Na frequência cardíaca, ANOVA responde sobre os três momentos e Tukey localiza os pares.
+No derramamento, a diferença foi de **14,9 pontos percentuais**, menor na TSD (p < 0,001).
 :::
 
 ## Principais achados e contribuição social
 
 ::: lead
-Na amostra estudada, a TSD apresentou menor derramamento que a seringa de 20 mL.
+TSD apresentou menor derramamento que a seringa de 20 mL.
 :::
 
-- **14,9 pontos percentuais** de diferença entre as médias publicadas, com p \< 0,001 no teste pareado.
-- Os sinais vitais variaram ao longo da oferta, mas os autores os consideraram dentro dos limites de normalidade.
-- Os testes ajudam a separar diferenças observadas de evidência estatística, desde que o modelo respeite o desenho.
-- O estudo contribui para avaliar práticas de alimentação neonatal e orientar novas pesquisas sobre aproveitamento da dieta.
+- **14,9 p.p.** de diferença no derramamento (p < 0,001).
+- Sinais vitais variaram, mas dentro da normalidade.
+- Resultado relevante para orientar práticas de alimentação neonatal.
 
-::: notes
-Tempo: 45 segundos. Retomar o objetivo inicial. O achado mais claro é menor derramamento com a TSD neste contexto. Os testes de hipótese são importantes porque quantificam a evidência das comparações, mas não transformam um estudo de um dia em prova de benefício de longo prazo. A contribuição social está em fundamentar a avaliação das práticas de alimentação neonatal e gerar perguntas para estudos futuros.
-:::
+## Limites da interpretação {.limites}
+
+- **Ordem fixa:** todos fizeram seringa antes da TSD — efeito de adaptação se mistura ao efeito do método.
+- **Um dia só por bebê:** não diz nada sobre dias seguintes, peso ou aleitamento a médio prazo.
+- **Amostra local, seringa única:** 30 bebês de um hospital, um só calibre — pode não generalizar.
+- **Normalidade não verificada:** artigo afirma, mas não mostra teste, gráfico ou critério.
+- **5 testes t sem correção:** aumenta a chance de achar "significativo" por acaso.
+
+## Obrigado! {.agradecimento .center background-color="honeydew"}
+
+Obrigado pela atenção!
