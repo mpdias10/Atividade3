@@ -439,5 +439,3 @@ grafico_sinais()
 - **5 testes t sem correção:** aumenta a chance de achar "significativo" por acaso.
 
 ## Obrigado! {.agradecimento .center background-color="honeydew"}
-
-Obrigado pela atenção!
