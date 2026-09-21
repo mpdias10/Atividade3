@@ -362,7 +362,7 @@ Antes de olhar qualquer p-valor, a pergunta certa já indica o teste certo: comp
 
 Resultados publicados, com interpretação das comparações.
 
-## Comparação dos métodos: tabela principal
+## Comparação dos métodos: Tabela principal
 
 ```{r}
 #| label: tabela-principal
