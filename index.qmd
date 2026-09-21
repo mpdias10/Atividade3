@@ -138,6 +138,43 @@ painel_comparacao <- function(exibir_nota = TRUE) {
     theme(legend.position = "top", text = element_text(color = "black"),
           axis.text = element_text(color = "black"), panel.grid.minor = element_blank())
 }
+tabela_sinais_vitais <- function() {
+  df <- tibble::tibble(
+    Parametro = c("Saturação de oxigênio (%)", "Frequência cardíaca (bpm)"),
+    tsd_antes = c("95,87", "134,2"),
+    tsd_durante = c("95,75", "149,17"),
+    tsd_depois = c("95,67", "145,50"),
+    p_tsd = c("Sem diferença*", "< 0,001"),
+    ser_antes = c("93,23", "133,6"),
+    ser_durante = c("94,37", "148,07"),
+    ser_depois = c("95,90", "144,73"),
+    p_ser = c("0,047", "< 0,001"),
+    signif_tsd = c(FALSE, TRUE),
+    signif_ser = c(TRUE, TRUE)
+  )
+  names(df)[1] <- "Parâmetro"
+
+  gt(dplyr::select(df, -signif_tsd, -signif_ser)) |>
+    cols_label(
+      tsd_antes = "Antes", tsd_durante = "Durante", tsd_depois = "Depois", p_tsd = "ANOVA",
+      ser_antes = "Antes", ser_durante = "Durante", ser_depois = "Depois", p_ser = "ANOVA"
+    ) |>
+    tab_spanner(label = "TSD", columns = c(tsd_antes, tsd_durante, tsd_depois, p_tsd)) |>
+    tab_spanner(label = "Seringa", columns = c(ser_antes, ser_durante, ser_depois, p_ser)) |>
+    tab_style(
+      style = cell_fill(color = "honeydew"),
+      locations = cells_body(columns = c(tsd_antes, tsd_durante, tsd_depois, p_tsd),
+                              rows = which(df$signif_tsd))
+    ) |>
+    tab_style(
+      style = cell_fill(color = "honeydew"),
+      locations = cells_body(columns = c(ser_antes, ser_durante, ser_depois, p_ser),
+                              rows = which(df$signif_ser))
+    ) |>
+    tab_source_note(source_note = "*Artigo relata ausência de diferença, mas não publica o valor exato de p.") |>
+    tab_options(table.font.size = px(21), data_row.padding = px(11), source_notes.font.size = px(16),
+                table.width = pct(100), table.font.color = "black")
+}
 ```
 
 # Introdução {.chapter background-color="honeydew"}
@@ -290,7 +327,7 @@ $$H_0: \mu_{AIG} = \mu_{PIG}$$
 
 A Tabela 2 identifica o teste como **ANOVA**.
 
-Com dois grupos, a ANOVA clássica equivale ao teste t com variância comum: **$F = t^2$**.
+Com dois grupos, a ANOVA clássica equivale ao teste t para grupos independentes com variância comum: **$F = t^2$**.
 :::
 ::: {.column width="47%"}
 ### Antes, durante e depois
@@ -357,7 +394,18 @@ tabela_subgrupos()
 Na TSD, o volume oferecido foi maior no grupo **PIG: 92,8%**, contra **69,6% no AIG** (p = 0,003).
 :::
 
-## Sinais vitais ao longo da alimentação
+## Sinais vitais: tabela de médias {.scrollable}
+
+```{r}
+#| label: tabela-sinais-vitais
+tabela_sinais_vitais()
+```
+
+::: {.small}
+Valores médios de saturação de oxigênio e frequência cardíaca em cada momento da oferta, para os dois métodos.
+:::
+
+## Sinais vitais ao longo da alimentação {.scrollable}
 
 ```{r}
 #| label: grafico-sinais-vitais
@@ -370,45 +418,17 @@ grafico_sinais()
 ```
 
 ::: {.small}
-**Linha verde: TSD. Linha laranja: seringa.** Cada ponto é a média dos 30 bebês naquele momento; as linhas conectam essas médias. A frequência cardíaca aumentou durante a oferta em ambos os métodos.
-:::
-
-## ANOVA global e comparações de Tukey {.tukey}
-
-| Parâmetro | Método | ANOVA relatada | Tukey relatado |
-|:--|:--|:--|:--|
-| Saturação | TSD | Sem diferença; p exato não informado | Não detalhado |
-| Saturação | Seringa | **p = 0,047** | Antes / depois: **p = 0,05** |
-| Frequência cardíaca | TSD | **p < 0,001** | Antes / durante e antes / depois: **p < 0,001** |
-| Frequência cardíaca | Seringa | **p < 0,001** | Antes / durante e antes / depois: **p < 0,001** |
-
-::: {.box-orange .small}
-**Como ler esta tabela:** a coluna ANOVA responde "existe alguma diferença entre os três momentos?"; a coluna Tukey responde "entre quais momentos específicos ela está?". Na saturação com seringa, a ANOVA já indica diferença (p = 0,047) e o Tukey aponta que ela está entre antes e depois — mas com p = 0,05, exatamente no limite dos 5%, na precisão que o artigo publica. Isso pede cautela na leitura: é uma diferença estatisticamente limítrofe, não uma alteração clinicamente grande — os próprios autores classificam os valores de saturação como dentro da normalidade.
+**Linha verde: TSD. Linha laranja: seringa.** Frequência cardíaca: sobe entre antes/durante e antes/depois, nos dois métodos (p < 0,001). Saturação: só varia com a seringa, entre antes e depois — com p = 0,05, bem na linha que separa "significativo" de "não significativo".
 :::
 
 # Conclusão {.chapter background-color="honeydew"}
 
-## Que perguntas os testes responderam? {.scrollable}
+## Principais achados e contribuição social {.scrollable}
 
-| Pergunta | Teste e evidência | Resposta no estudo |
-|:--|:--|:--|
-| O derramamento difere entre os métodos? | **t pareado:** p < 0,001 | TSD: **2,3%**; seringa: **17,2%**. |
-| Na TSD, AIG e PIG recebem o mesmo volume? | **ANOVA:** p = 0,003 | AIG: **69,6%**; PIG: **92,8%**. |
-| A frequência cardíaca muda ao longo da oferta? | **ANOVA/Tukey:** p < 0,001 | Sobe entre **antes e durante/depois**, nos dois métodos. |
-
-::: {.box-green .small}
-No derramamento, a diferença foi de **14,9 pontos percentuais**, menor na TSD (p < 0,001).
-:::
-
-## Principais achados e contribuição social
-
-::: lead
-TSD apresentou menor derramamento que a seringa de 20 mL.
-:::
-
-- **14,9 p.p.** de diferença no derramamento (p < 0,001).
-- Sinais vitais variaram, mas dentro da normalidade.
-- Resultado relevante para orientar práticas de alimentação neonatal.
+- **Derramamento é o achado mais forte:** foi o único resultado com p < 0,001 em toda a apresentação — a diferença de 14,9 pontos percentuais, mostrada na tabela principal, é a evidência mais sólida do que vimos.
+- **Subgrupos:** o resultado mostrado na tabela AIG/PIG (92,8% vs. 69,6%, p = 0,003) aparece só na TSD — nas outras quatro variáveis e na seringa não houve diferença entre os grupos.
+- **Sinais vitais não indicam risco:** mesmo a saturação com a seringa, que teve p = 0,05 — bem na linha que separa "significativo" de "não significativo" — fica dentro da normalidade clínica, segundo os próprios autores.
+- **Contribuição social:** dentro dos limites já discutidos no slide anterior, o estudo dá uma base objetiva para considerar a TSD como alternativa de menor perda de dieta.
 
 ## Limites da interpretação {.limites}
 
